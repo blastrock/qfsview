@@ -40,7 +40,6 @@
 #include <QContextMenuEvent>
 #include <QMenu>
 #include <QMouseEvent>
-#include <kconfiggroup.h>
 
 class TreeMapWidget;
 class TreeMapItem;
@@ -728,12 +727,6 @@ public:
     {
         return _borderWidth;
     }
-
-    /**
-     * Save/restore options.
-     */
-    void saveOptions(KConfigGroup *, const QString &prefix = QString());
-    void restoreOptions(KConfigGroup *, const QString &prefix = QString());
 
     /**
      * These functions populate given popup menus.

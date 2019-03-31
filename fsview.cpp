@@ -25,16 +25,7 @@
 #include <QDir>
 #include <QTimer>
 #include <QApplication>
-
-#include <KLocalizedString>
-#include <kconfig.h>
-#include <kdebug.h>
-#include <kmessagebox.h>
-
-#include <kio/job.h>
-#include <kauthorized.h>
-#include <kconfiggroup.h>
-#include <kurlauthorized.h>
+#include <QDebug>
 
 // FSView
 
@@ -43,14 +34,14 @@ QMap<QString, MetricEntry> FSView::_dirMetric;
 FSView::FSView(Inode *base, QWidget *parent)
     : TreeMapWidget(base, parent)
 {
-    setFieldType(0, i18n("Name"));
-    setFieldType(1, i18n("Size"));
-    setFieldType(2, i18n("File Count"));
-    setFieldType(3, i18n("Directory Count"));
-    setFieldType(4, i18n("Last Modified"));
-    setFieldType(5, i18n("Owner"));
-    setFieldType(6, i18n("Group"));
-    setFieldType(7, i18n("Mime Type"));
+    setFieldType(0, tr("Name"));
+    setFieldType(1, tr("Size"));
+    setFieldType(2, tr("File Count"));
+    setFieldType(3, tr("Directory Count"));
+    setFieldType(4, tr("Last Modified"));
+    setFieldType(5, tr("Owner"));
+    setFieldType(6, tr("Group"));
+    setFieldType(7, tr("Mime Type"));
 
     // defaults
     setVisibleWidth(4, true);
@@ -75,45 +66,11 @@ FSView::FSView(Inode *base, QWidget *parent)
     _dirsFinished = 0;
     _lastDir = 0;
 
-    _config = new KConfig(QStringLiteral("fsviewrc"));
-
-    // restore TreeMap visualization options of last execution
-    KConfigGroup tmconfig(_config, "TreeMap");
-    restoreOptions(&tmconfig);
-    QString str = tmconfig.readEntry("ColorMode");
-    if (!str.isEmpty()) {
-        setColorMode(str);
-    }
-
-    if (_dirMetric.count() == 0) {
-        // restore metric cache
-        KConfigGroup cconfig(_config, "MetricCache");
-        int ccount = cconfig.readEntry("Count", 0);
-        int i, f, d;
-        double s;
-        QString str;
-        for (i = 1; i <= ccount; i++) {
-            str = QStringLiteral("Dir%1").arg(i);
-            if (!cconfig.hasKey(str)) {
-                continue;
-            }
-            str = cconfig.readPathEntry(str, QString());
-            s = cconfig.readEntry(QStringLiteral("Size%1").arg(i), 0.0);
-            f = cconfig.readEntry(QStringLiteral("Files%1").arg(i), 0);
-            d = cconfig.readEntry(QStringLiteral("Dirs%1").arg(i), 0);
-            if (s == 0.0 || f == 0 || d == 0) {
-                continue;
-            }
-            setDirMetric(str, s, f, d);
-        }
-    }
-
     _sm.setListener(this);
 }
 
 FSView::~FSView()
 {
-    delete _config;
 }
 
 void FSView::stop()
@@ -128,7 +85,7 @@ void FSView::setPath(const QString &p)
         return;
     }
 
-    //kDebug(90100) << "FSView::setPath " << p;
+    //qDebug() << "FSView::setPath " << p;
 
     // stop any previous updating
     stop();
@@ -140,12 +97,6 @@ void FSView::setPath(const QString &p)
     }
     _path = QDir::cleanPath(_path);
     _pathDepth = _path.count('/');
-
-    QUrl u = QUrl::fromLocalFile(_path);
-    if (!KUrlAuthorized::authorizeUrlAction(QStringLiteral("list"), QUrl(), u)) {
-        QString msg = KIO::buildErrorString(KIO::ERR_ACCESS_DENIED, u.toDisplayString());
-        KMessageBox::sorry(this, msg);
-    }
 
     ScanDir *d = _sm.setTop(_path);
 
@@ -181,10 +132,10 @@ bool FSView::getDirMetric(const QString &k,
     d = (*it).dirCount;
 
     if (0) {
-        kDebug(90100) << "getDirMetric " << k;
+        qDebug() << "getDirMetric " << k;
     }
     if (0) {
-        kDebug(90100) << " - got size " << s << ", files " << f;
+        qDebug() << " - got size " << s << ", files " << f;
     }
 
     return true;
@@ -193,14 +144,14 @@ bool FSView::getDirMetric(const QString &k,
 void FSView::setDirMetric(const QString &k,
                           double s, unsigned int f, unsigned int d)
 {
-    if (0) kDebug(90100) << "setDirMetric '" << k << "': size "
+    if (0) qDebug() << "setDirMetric '" << k << "': size "
                              << s << ", files " << f << ", dirs " << d << endl;
     _dirMetric.insert(k, MetricEntry(s, f, d));
 }
 
 void FSView::requestUpdate(Inode *i)
 {
-    if (0) kDebug(90100) << "FSView::requestUpdate(" << i->path()
+    if (0) qDebug() << "FSView::requestUpdate(" << i->path()
                              << ")" << endl;
 
     ScanDir *peer = i->dirPeer();
@@ -276,7 +227,7 @@ void FSView::scanFinished(ScanDir *d)
     _lastDir = d;
     _dirsFinished++;
 
-    if (0) kDebug(90100) << "FSFiew::scanFinished: " << d->path()
+    if (0) qDebug() << "FSFiew::scanFinished: " << d->path()
                              << ", Data " << data
                              << ", Progress " << _progress << "/"
                              << _progressSize << endl;
@@ -291,25 +242,25 @@ void FSView::contextMenu(TreeMapItem *i, const QPoint &p)
 {
     QMenu popup;
 
-    QMenu *spopup = new QMenu(i18n("Go To"));
-    QMenu *dpopup = new QMenu(i18n("Stop at Depth"));
-    QMenu *apopup = new QMenu(i18n("Stop at Area"));
-    QMenu *fpopup = new QMenu(i18n("Stop at Name"));
+    QMenu *spopup = new QMenu(tr("Go To"));
+    QMenu *dpopup = new QMenu(tr("Stop at Depth"));
+    QMenu *apopup = new QMenu(tr("Stop at Area"));
+    QMenu *fpopup = new QMenu(tr("Stop at Name"));
 
     // choosing from the selection menu will give a selectionChanged() signal
     addSelectionItems(spopup, 901, i);
     popup.addMenu(spopup);
 
-    QAction *actionGoUp = popup.addAction(i18n("Go Up"));
+    QAction *actionGoUp = popup.addAction(tr("Go Up"));
     popup.addSeparator();
-    QAction *actionStopRefresh = popup.addAction(i18n("Stop Refresh"));
+    QAction *actionStopRefresh = popup.addAction(tr("Stop Refresh"));
     actionStopRefresh->setEnabled(_sm.scanRunning());
-    QAction *actionRefresh = popup.addAction(i18n("Refresh"));
+    QAction *actionRefresh = popup.addAction(tr("Refresh"));
     actionRefresh->setEnabled(!_sm.scanRunning());
 
     QAction *actionRefreshSelected = 0;
     if (i) {
-        actionRefreshSelected = popup.addAction(i18n("Refresh '%1'", i->text(0)));
+        actionRefreshSelected = popup.addAction(tr("Refresh '%1'").arg(i->text(0)));
     }
     popup.addSeparator();
     addDepthStopItems(dpopup, 1001, i);
@@ -321,10 +272,10 @@ void FSView::contextMenu(TreeMapItem *i, const QPoint &p)
 
     popup.addSeparator();
 
-    QMenu *cpopup = new QMenu(i18n("Color Mode"));
+    QMenu *cpopup = new QMenu(tr("Color Mode"));
     addColorItems(cpopup, 1401);
     popup.addMenu(cpopup);
-    QMenu *vpopup = new QMenu(i18n("Visualization"));
+    QMenu *vpopup = new QMenu(tr("Visualization"));
     addVisualizationItems(vpopup, 1301);
     popup.addMenu(vpopup);
 
@@ -351,20 +302,6 @@ void FSView::contextMenu(TreeMapItem *i, const QPoint &p)
             requestUpdate(i);
         }
     }
-}
-
-void FSView::saveMetric(KConfigGroup *g)
-{
-    QMap<QString, MetricEntry>::iterator it;
-    int c = 1;
-    for (it = _dirMetric.begin(); it != _dirMetric.end(); ++it) {
-        g->writePathEntry(QStringLiteral("Dir%1").arg(c), it.key());
-        g->writeEntry(QStringLiteral("Size%1").arg(c), (*it).size);
-        g->writeEntry(QStringLiteral("Files%1").arg(c), (*it).fileCount);
-        g->writeEntry(QStringLiteral("Dirs%1").arg(c), (*it).dirCount);
-        c++;
-    }
-    g->writeEntry("Count", c - 1);
 }
 
 void FSView::setColorMode(FSView::ColorMode cm)
@@ -420,12 +357,12 @@ void FSView::addColorItems(QMenu *popup, int id)
     connect(popup, SIGNAL(triggered(QAction*)),
             this, SLOT(colorActivated(QAction*)));
 
-    addPopupItem(popup, i18n("None"),      colorMode() == None,  id++);
-    addPopupItem(popup, i18n("Depth"),     colorMode() == Depth, id++);
-    addPopupItem(popup, i18n("Name"),      colorMode() == Name,  id++);
-    addPopupItem(popup, i18n("Owner"),     colorMode() == Owner, id++);
-    addPopupItem(popup, i18n("Group"),     colorMode() == Group, id++);
-    addPopupItem(popup, i18n("Mime Type"), colorMode() == Mime,  id++);
+    addPopupItem(popup, tr("None"),      colorMode() == None,  id++);
+    addPopupItem(popup, tr("Depth"),     colorMode() == Depth, id++);
+    addPopupItem(popup, tr("Name"),      colorMode() == Name,  id++);
+    addPopupItem(popup, tr("Owner"),     colorMode() == Owner, id++);
+    addPopupItem(popup, tr("Group"),     colorMode() == Group, id++);
+    addPopupItem(popup, tr("Mime Type"), colorMode() == Mime,  id++);
 }
 
 void FSView::colorActivated(QAction *a)
@@ -461,15 +398,6 @@ void FSView::keyPressEvent(QKeyEvent *e)
 
 void FSView::saveFSOptions()
 {
-    KConfigGroup tmconfig(_config, "TreeMap");
-    saveOptions(&tmconfig);
-    tmconfig.writeEntry("ColorMode", colorModeString());
-
-    KConfigGroup gconfig(_config, "General");
-    gconfig.writeEntry("Path", _path);
-
-    KConfigGroup cconfig(_config, "MetricCache");
-    saveMetric(&cconfig);
 }
 
 void FSView::quit()
@@ -490,7 +418,7 @@ void FSView::doRedraw()
 
     if ((_progress > 0) && (_progressSize > 0) && _lastDir) {
         int percent = _progress * 100 / _progressSize;
-        if (0) kDebug(90100) << "FSView::progress "
+        if (0) qDebug() << "FSView::progress "
                                  << _progress << "/" << _progressSize
                                  << "= " << percent << "%, "
                                  << _dirsFinished << " dirs read, in "
@@ -500,7 +428,7 @@ void FSView::doRedraw()
 
     if (_allowRefresh && ((redrawCounter % 4) == 0)) {
         if (0) {
-            kDebug(90100) << "doRedraw " << _sm.scanLength();
+            qDebug() << "doRedraw " << _sm.scanLength();
         }
         redraw();
     } else {
@@ -526,7 +454,7 @@ void FSView::doUpdate()
                 _progressSize = 3 * _chunkSize1;
 
                 if (1) {
-                    kDebug(90100) << "Phase 2: CSize " << _chunkSize1;
+                    qDebug() << "Phase 2: CSize " << _chunkSize1;
                 }
             }
             break;
@@ -550,7 +478,7 @@ void FSView::doUpdate()
                 /* Go to maximally 66% by scaling with 1.5 */
                 _progressSize = _progressSize * 3 / 2;
 
-                if (1) kDebug(90100) << "Phase 3: CSize " << _chunkSize2
+                if (1) qDebug() << "Phase 3: CSize " << _chunkSize2
                                          << ", Todo " << todo
                                          << ", Progress " << _progress
                                          << "/" << _progressSize << endl;
@@ -570,7 +498,7 @@ void FSView::doUpdate()
                 _progressSize = (int)((double)todo / (1.0 - percent) + .5);
                 _progress = _progressSize - todo;
 
-                if (1) kDebug(90100) << "Phase 4: CSize " << _chunkSize3
+                if (1) qDebug() << "Phase 4: CSize " << _chunkSize3
                                          << ", Todo " << todo
                                          << ", Progress " << _progress
                                          << "/" << _progressSize << endl;

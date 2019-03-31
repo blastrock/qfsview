@@ -21,12 +21,10 @@
  */
 
 #include "inode.h"
-#include <kdebug.h>
-#include <kglobal.h>
-#include <kiconloader.h>
-#include <KLocalizedString>
 #include <QMimeDatabase>
 #include <QMimeType>
+#include <QDateTime>
+#include <QDebug>
 #include "scan.h"
 #include "fsview.h"
 
@@ -74,7 +72,7 @@ Inode::Inode(ScanFile *f, Inode *parent)
 
 Inode::~Inode()
 {
-    if (0) kDebug(90100) << "~Inode [" << path()
+    if (0) qDebug() << "~Inode [" << path()
                              << "]" << endl;
 
     /* reset Listener of old Peer */
@@ -108,7 +106,7 @@ QString Inode::path() const
 
 void Inode::init(const QString &path)
 {
-    if (0) kDebug(90100) << "Inode::init [" << path
+    if (0) qDebug() << "Inode::init [" << path
                              << "]" << endl;
 
     _info = QFileInfo(path);
@@ -143,7 +141,7 @@ void Inode::init(const QString &path)
 /* ScanListener interface */
 void Inode::sizeChanged(ScanDir *d)
 {
-    if (0) kDebug(90100) << "Inode::sizeChanged [" << path() << "] in "
+    if (0) qDebug() << "Inode::sizeChanged [" << path() << "] in "
                              << d->name() << ": size " << d->size() << endl;
 
     _resortNeeded = true;
@@ -151,7 +149,7 @@ void Inode::sizeChanged(ScanDir *d)
 
 void Inode::scanFinished(ScanDir *d)
 {
-    if (0) kDebug(90100) << "Inode::scanFinished [" << path() << "] in "
+    if (0) qDebug() << "Inode::scanFinished [" << path() << "] in "
                              << d->name() << ": size " << d->size() << endl;
 
     _resortNeeded = true;
@@ -356,19 +354,19 @@ QString Inode::text(int i) const
         if (s < 1000) {
             text = QStringLiteral("%1 B").arg((int)(s + .5));
         } else if (s < 10 * 1024) {
-            text = QStringLiteral("%1 kB").arg(KGlobal::locale()->formatNumber(s / 1024 + .005, 2));
+            text = QStringLiteral("%1 kB").arg(QLocale::system().toString(s / 1024 + .005, 'f', 2));
         } else if (s < 100 * 1024) {
-            text = QStringLiteral("%1 kB").arg(KGlobal::locale()->formatNumber(s / 1024 + .05, 1));
+            text = QStringLiteral("%1 kB").arg(QLocale::system().toString(s / 1024 + .05, 'f', 1));
         } else if (s < 1000 * 1024) {
             text = QStringLiteral("%1 kB").arg((int)(s / 1024 + .5));
         } else if (s < 10 * 1024 * 1024) {
-            text = QStringLiteral("%1 MB").arg(KGlobal::locale()->formatNumber(s / 1024 / 1024 + .005, 2));
+            text = QStringLiteral("%1 MB").arg(QLocale::system().toString(s / 1024 / 1024 + .005, 'f', 2));
         } else if (s < 100 * 1024 * 1024) {
-            text = QStringLiteral("%1 MB").arg(KGlobal::locale()->formatNumber(s / 1024 / 1024 + .05, 1));
+            text = QStringLiteral("%1 MB").arg(QLocale::system().toString(s / 1024 / 1024 + .05, 'f', 1));
         } else if (s < 1000 * 1024 * 1024) {
             text = QStringLiteral("%1 MB").arg((int)(s / 1024 / 1024 + .5));
         } else {
-            text =  QStringLiteral("%1 GB").arg(KGlobal::locale()->formatNumber(s / 1024 / 1024 / 1024 + .005, 2));
+            text =  QStringLiteral("%1 GB").arg(QLocale::system().toString(s / 1024 / 1024 / 1024 + .005, 'f', 2));
         }
 
         if (_sizeEstimation > 0) {
@@ -416,14 +414,5 @@ QString Inode::text(int i) const
 
 QPixmap Inode::pixmap(int i) const
 {
-    if (i != 0) {
-        return QPixmap();
-    }
-
-    if (!_mimePixmapSet) {
-        QUrl u = QUrl::fromLocalFile(path());
-        _mimePixmap = KIconLoader::global()->loadMimeTypeIcon(KIO::iconNameForUrl(u), KIconLoader::Small);
-        _mimePixmapSet = true;
-    }
-    return _mimePixmap;
+    return QPixmap();
 }

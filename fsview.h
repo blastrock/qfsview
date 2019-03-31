@@ -27,15 +27,11 @@
 #include <qfileinfo.h>
 #include <qstring.h>
 
-#include <kmimetype.h>
-#include <kconfiggroup.h>
-
 #include "treemap.h"
 #include "inode.h"
 #include "scan.h"
 
 class QMenu;
-class KConfig;
 
 /* Cached Metric info config */
 class MetricEntry
@@ -74,11 +70,6 @@ public:
     explicit FSView(Inode *, QWidget *parent = Q_NULLPTR);
     ~FSView();
 
-    KConfig *config()
-    {
-        return _config;
-    }
-
     void setPath(const QString &);
     QString path()
     {
@@ -108,7 +99,6 @@ public:
 
     static bool getDirMetric(const QString &, double &, unsigned int &, unsigned int &);
     static void setDirMetric(const QString &, double, unsigned int, unsigned int);
-    void saveMetric(KConfigGroup *);
     void saveFSOptions();
 
     // for color mode
@@ -133,7 +123,6 @@ protected:
     void keyPressEvent(QKeyEvent *) Q_DECL_OVERRIDE;
 
 private:
-    KConfig *_config;
     ScanManager _sm;
 
     // when a contextMenu is shown, we don't allow async. refreshing

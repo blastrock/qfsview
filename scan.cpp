@@ -21,11 +21,8 @@
 #include <QDir>
 #include <QStringList>
 #include <QSet>
+#include <QDebug>
 #include <qplatformdefs.h>
-
-#include <kdebug.h>
-#include <kauthorized.h>
-#include <kurlauthorized.h>
 
 #include "inode.h"
 
@@ -104,7 +101,7 @@ void ScanManager::stopScan()
         return;
     }
 
-    if (0) kDebug(90100) << "ScanManager::stopScan, scanLength "
+    if (0) qDebug() << "ScanManager::stopScan, scanLength "
                              << _list.count() << endl;
 
     while (!_list.isEmpty()) {
@@ -135,7 +132,7 @@ ScanFile::ScanFile()
     _listener = 0;
 }
 
-ScanFile::ScanFile(const QString &n, KIO::fileoffset_t s)
+ScanFile::ScanFile(const QString &n, off_t s)
 {
     _name = n;
     _size = s;
@@ -269,8 +266,8 @@ int ScanDir::scan(ScanItem *si, ScanItemList &list, int data)
         return 0;
     }
 
-    QUrl u = QUrl::fromLocalFile(si->absPath);
-    if (!KUrlAuthorized::authorizeUrlAction(QStringLiteral("list"), QUrl(), u)) {
+    QDir d(si->absPath);
+    if (!d.isReadable()) {
         if (_parent) {
             _parent->subScanFinished();
         }
@@ -278,7 +275,6 @@ int ScanDir::scan(ScanItem *si, ScanItemList &list, int data)
         return 0;
     }
 
-    QDir d(si->absPath);
     const QStringList fileList = d.entryList(QDir::Files |
                                  QDir::Hidden | QDir::NoSymLinks);
 
@@ -336,7 +332,7 @@ void ScanDir::subScanFinished()
     _dirsFinished++;
     callSizeChanged();
 
-    if (0) kDebug(90100) << "ScanDir::subScanFinished [" << path()
+    if (0) qDebug() << "ScanDir::subScanFinished [" << path()
                              << "]: " << _dirsFinished << "/" << _dirs.count() << endl;
 
     if (_dirsFinished < _dirs.count()) {
@@ -386,7 +382,7 @@ void ScanDir::setupChildRescan()
 
 void ScanDir::callScanStarted()
 {
-    if (0) kDebug(90100) << "ScanDir:Started [" << path()
+    if (0) qDebug() << "ScanDir:Started [" << path()
                              << "]: size " << size() << ", files " << fileCount() << endl;
 
     ScanListener *mListener = _manager ? _manager->listener() : 0;
@@ -401,7 +397,7 @@ void ScanDir::callScanStarted()
 
 void ScanDir::callSizeChanged()
 {
-    if (0) kDebug(90100) << ". [" << path()
+    if (0) qDebug() << ". [" << path()
                              << "]: size " << size() << ", files " << fileCount() << endl;
 
     _dirty = true;
@@ -422,7 +418,7 @@ void ScanDir::callSizeChanged()
 
 void ScanDir::callScanFinished()
 {
-    if (0) kDebug(90100) << "ScanDir:Finished [" << path()
+    if (0) qDebug() << "ScanDir:Finished [" << path()
                              << "]: size " << size() << ", files " << fileCount() << endl;
 
     ScanListener *mListener = _manager ? _manager->listener() : 0;

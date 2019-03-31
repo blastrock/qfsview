@@ -25,7 +25,6 @@
 
 #include <qfile.h>
 #include <QVector>
-#include <kio/global.h>
 
 class ScanDir;
 class ScanFile;
@@ -137,14 +136,14 @@ class ScanFile
 {
 public:
     ScanFile();
-    ScanFile(const QString &n, KIO::fileoffset_t s);
+    ScanFile(const QString &n, off_t s);
     ~ScanFile();
 
     const QString &name()
     {
         return _name;
     }
-    KIO::fileoffset_t size()
+    off_t size()
     {
         return _size;
     }
@@ -161,7 +160,7 @@ public:
 
 private:
     QString _name;
-    KIO::fileoffset_t _size;
+    off_t _size;
     ScanListener *_listener;
 };
 
@@ -222,7 +221,7 @@ public:
     {
         return _name;
     }
-    KIO::fileoffset_t size()
+    off_t size()
     {
         update();
         return _size;
@@ -283,7 +282,7 @@ private:
 
     QString _name;
     bool _dirty; /* needs a call to update() */
-    KIO::fileoffset_t _size, _fileSize;
+    off_t _size, _fileSize;
     unsigned int _fileCount, _dirCount;
     int _dirsFinished, _data;
     ScanDir *_parent;
