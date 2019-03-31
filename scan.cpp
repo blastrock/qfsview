@@ -288,7 +288,7 @@ int ScanDir::scan(ScanItem *si, ScanItemList &list, int data)
             if (QT_LSTAT(tmp.toStdString().c_str(), &buff) != 0) {
                 continue;
             }
-            _files.append(ScanFile(*it, buff.st_size));
+            _files.append(ScanFile(*it, buff.st_blocks * 512));
             _fileSize += buff.st_size;
         }
     }
