@@ -20,6 +20,7 @@
 
 #include <QDir>
 #include <QStringList>
+#include <QStorageInfo>
 #include <QSet>
 #include <QDebug>
 #include <qplatformdefs.h>
@@ -243,13 +244,11 @@ bool ScanDir::isForbiddenDir(QString &d)
 
     if (!s) {
         s = new QSet<QString>;
-        // directories without real files on Linux
-        // TODO: should be OS specific
-        s->insert(QStringLiteral("/proc"));
-        s->insert(QStringLiteral("/dev"));
-        s->insert(QStringLiteral("/sys"));
+        // skip mount points
+        for (const QStorageInfo& i : QStorageInfo::mountedVolumes())
+          s->insert(i.rootPath());
     }
-    return (s->contains(d));
+    return _parent && (s->contains(d));
 }
 
 int ScanDir::scan(ScanItem *si, ScanItemList &list, int data)
