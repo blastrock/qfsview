@@ -15,3 +15,4 @@ set(libfsview_SRCS
 set(fsview_SRCS main.cpp ${libfsview_SRCS} )
 add_executable(fsview ${fsview_SRCS})
 target_link_libraries(fsview PUBLIC Qt5::Widgets)
+install(TARGETS fsview)
